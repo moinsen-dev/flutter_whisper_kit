@@ -10,3 +10,20 @@ node_modules/
 # melos
 melos_workspace.iml
 .idea
+
+# Lock files (libraries should not commit these)
+pubspec.lock
+Podfile.lock
+Package.resolved
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# CocoaPods
+**/Pods/
+
+# Xcode
+xcuserdata/
+*.xcworkspace/xcuserdata/
+DerivedData/
