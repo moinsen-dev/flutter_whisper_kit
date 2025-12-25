@@ -10,7 +10,7 @@ A monorepo for Flutter WhisperKit packages that enable on-device speech recognit
 
 This fork includes the following improvements over the original:
 
-### Podspec Platform Fix
+### Podspec Platform Fix (Issue #148)
 The original podspec had a bug where setting `s.platform` twice would cause the second platform declaration to override the first, breaking multi-platform support. This fork fixes the issue by using platform-specific deployment targets and dependencies:
 
 ```ruby
@@ -21,6 +21,35 @@ s.osx.deployment_target = '13.0'
 # Platform-specific dependencies
 s.ios.dependency 'Flutter'
 s.osx.dependency 'FlutterMacOS'
+```
+
+### Progress Stream Variant Identifier (Issue #108)
+Fixed progress stream conflicts during simultaneous downloads. The `Progress` model now includes an optional `variant` field that identifies which model the progress event belongs to, allowing clients to filter progress by variant when downloading multiple models concurrently:
+
+```dart
+// Progress events now include the variant
+modelProgressStream.listen((progress) {
+  if (progress.variant == 'openai_whisper-large-v3') {
+    // Handle progress for this specific model
+  }
+});
+```
+
+### Translation Control (Issue #152)
+The `task` parameter in `DecodingOptions` is now properly respected. You can control whether WhisperKit transcribes audio in the original language or translates it to English:
+
+```dart
+// Transcribe in original language (default)
+await transcribeFromFile(path, options: DecodingOptions(
+  task: DecodingTask.transcribe,
+  language: 'de',  // German
+));
+
+// Translate to English
+await transcribeFromFile(path, options: DecodingOptions(
+  task: DecodingTask.translate,
+  language: 'de',  // German audio, English output
+));
 ```
 
 ## Overview

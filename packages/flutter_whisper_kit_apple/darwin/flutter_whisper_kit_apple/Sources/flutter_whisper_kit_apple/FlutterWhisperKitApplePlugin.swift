@@ -103,9 +103,9 @@ private class WhisperKitApiImpl: WhisperKitMessage {
             modelFolder = try await WhisperKit.download(
               variant: variant,
               from: modelRepo ?? "argmaxinc/whisperkit-coreml",
-              progressCallback:  { progress in
+              progressCallback:  { [variant] progress in
                 if let streamHandler = WhisperKitApiImpl.modelProgressStreamHandler as? ModelProgressStreamHandler {
-                  streamHandler.sendProgress(progress)
+                  streamHandler.sendProgress(progress, variant: variant)
                 }
               },
             )
@@ -281,31 +281,23 @@ private class WhisperKitApiImpl: WhisperKitMessage {
     -> TranscriptionResult?
   {
     guard let whisperKit = whisperKit else { return nil }
-    var selectedLanguage: String = "japanese"
-    let languageCode = Constants.languages[selectedLanguage, default: Constants.defaultLanguageCode]
-    // let task: DecodingTask = selectedTask == "transcribe" ? .transcribe : .translate
-    let task: DecodingTask = .transcribe
-    var lastConfirmedSegmentEndSeconds: Float = 0
-    let seekClip: [Float] = [lastConfirmedSegmentEndSeconds]
 
-    let options =
-      options
-      ?? DecodingOptions(
-        verbose: true,
-        task: task,
-        language: languageCode,
-        temperature: Float(0),
-        temperatureFallbackCount: Int(5),
-        sampleLength: Int(224),
-        usePrefillPrompt: true,
-        usePrefillCache: true,
-        skipSpecialTokens: true,
-        withoutTimestamps: false,
-        wordTimestamps: true,
-        clipTimestamps: seekClip,
-        concurrentWorkerCount: Int(4),
-        chunkingStrategy: .vad
-      )
+    // Use provided options or create defaults
+    // The task parameter from options is now respected (transcribe or translate)
+    let options = options ?? DecodingOptions(
+      verbose: true,
+      task: .transcribe,  // Default to transcribe, but can be overridden by caller
+      temperature: Float(0),
+      temperatureFallbackCount: Int(5),
+      sampleLength: Int(224),
+      usePrefillPrompt: true,
+      usePrefillCache: true,
+      skipSpecialTokens: true,
+      withoutTimestamps: false,
+      wordTimestamps: true,
+      concurrentWorkerCount: Int(4),
+      chunkingStrategy: .vad
+    )
 
     // var currentChunks: [Int: (chunkText: [String], fallbacks: Int)] = [:]
 
@@ -662,9 +654,9 @@ private class WhisperKitApiImpl: WhisperKitMessage {
           useBackgroundSession: useBackgroundSession,
           from: repo,
           token: token,
-          progressCallback: { [weak self] progress in
+          progressCallback: { [variant] progress in
             if let modelProgressHandler = WhisperKitApiImpl.modelProgressStreamHandler as? ModelProgressStreamHandler {
-              modelProgressHandler.sendProgress(progress)
+              modelProgressHandler.sendProgress(progress, variant: variant)
             }
           }
         )
@@ -1007,14 +999,16 @@ private class ModelProgressStreamHandler: NSObject, FlutterStreamHandler {
     eventSink = nil
     return nil
   }
-  
+
   /// Sends download progress to the Flutter event sink
   ///
-  /// - Parameter progress: The progress object to send
-  func sendProgress(_ progress: Progress) {
+  /// - Parameters:
+  ///   - progress: The progress object to send
+  ///   - variant: The model variant this progress is associated with (optional for backward compatibility)
+  func sendProgress(_ progress: Progress, variant: String? = nil) {
     if let eventSink = eventSink {
       DispatchQueue.main.async {
-        let progressDict: [String: Any] = [
+        var progressDict: [String: Any] = [
           "totalUnitCount": progress.totalUnitCount,
           "completedUnitCount": progress.completedUnitCount,
           "fractionCompleted": progress.fractionCompleted,
@@ -1022,6 +1016,9 @@ private class ModelProgressStreamHandler: NSObject, FlutterStreamHandler {
           "isPaused": progress.isPaused,
           "isCancelled": progress.isCancelled
         ]
+        if let variant = variant {
+          progressDict["variant"] = variant
+        }
         eventSink(progressDict)
       }
     }
