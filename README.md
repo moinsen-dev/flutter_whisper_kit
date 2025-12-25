@@ -1,8 +1,27 @@
 # Flutter WhisperKit
 
-## 🧠 [DeepWiki]
+[![Fork](https://img.shields.io/badge/fork-moinsen--dev-blue)](https://github.com/moinsen-dev/flutter_whisper_kit)
+
+> **Note**: This is a fork of [r0227n/flutter_whisper_kit](https://github.com/r0227n/flutter_whisper_kit) with fixes for iOS/macOS platform compatibility.
 
 A monorepo for Flutter WhisperKit packages that enable on-device speech recognition in Flutter applications using WhisperKit.
+
+## Fork Changes
+
+This fork includes the following improvements over the original:
+
+### Podspec Platform Fix
+The original podspec had a bug where setting `s.platform` twice would cause the second platform declaration to override the first, breaking multi-platform support. This fork fixes the issue by using platform-specific deployment targets and dependencies:
+
+```ruby
+# Fixed: Support both iOS and macOS platforms
+s.ios.deployment_target = '16.0'
+s.osx.deployment_target = '13.0'
+
+# Platform-specific dependencies
+s.ios.dependency 'Flutter'
+s.osx.dependency 'FlutterMacOS'
+```
 
 ## Overview
 
@@ -42,19 +61,19 @@ For detailed usage instructions, refer to the documentation in the individual pa
 - [flutter_whisper_kit]
 - [flutter_whisper_kit_apple]
 
+## Acknowledgments
+
+- [Original flutter_whisper_kit](https://github.com/r0227n/flutter_whisper_kit) - The original Flutter WhisperKit implementation by r0227n
+- [WhisperKit] - The underlying speech recognition framework by Argmax
+- [Flutter] - The UI toolkit for building natively compiled applications
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Acknowledgments
-
-- [WhisperKit] - The underlying speech recognition framework
-- [Flutter] - The UI toolkit for building natively compiled applications
-
 <!-- URLs -->
 
 [WhisperKit]: https://github.com/argmaxinc/WhisperKit
-[DeepWiki]: https://deepwiki.com/r0227n/flutter_whisper_kit
 [flutter_whisper_kit]: packages/flutter_whisper_kit/README.md
 [flutter_whisper_kit_apple]: packages/flutter_whisper_kit_apple/README.md
 [Flutter]: https://flutter.dev/
